@@ -1,0 +1,167 @@
+import smtplib
+import ssl
+import time
+import pandas as pd
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from getpass import getpass
+from email.mime.image import MIMEImage
+
+
+path1 = "/Users/[Name]/Documents/email_contacts.xlsx" #put your pathlink here to the excelsheet
+df = pd.read_excel(path1)
+
+#dataframes without empty email values
+df = df[df.Email.notnull()]
+
+#if you want to seperate different dataframes based on language
+df_eng = df[df['Language'] == 'ENG']
+df_nl = df[df['Language'] == 'NL']
+df_de = df[df['Language'] == 'DE']
+
+#this is my practice email dataframe with just me as recipient
+df_eng_liz = df[df['Email'] == 'yourmail@gmail.com']
+
+# print df_eng_liz to see that you're not applying it for everyone
+print(df_eng_liz)
+
+
+# Gmail settings
+smtp_server = "smtp.gmail.com"
+port = 587  # For STARTTLS & depends per mail server
+sender_email = "yourmail@gmail.com"
+password = getpass.getpass("Type your password and press enter:")  # Use app-specific password
+
+#try out:
+subject_NL = "Here's your first newsletter!!!"
+
+
+# Path to your coverart image
+image_path = "Heartbreak_Cover.jpg"  # Replace with the path to your image file --> needs to be in same folder as your code otherwise needs full path
+
+# Create the email and send to each row in the dataframe
+context = ssl.create_default_context()
+
+with smtplib.SMTP(smtp_server, port) as server:
+    server.starttls(context=context)
+    server.login(sender_email, password)
+    
+    # Iterate through the dataframe and send email to each recipient
+    # make sure you get the right dataframe
+
+    for i, row in df_eng_liz.iterrows():
+        receiver_name = row['Name']
+        receiver_email = row['Email']
+        media_name = row['MediaName']
+
+        # Add conditional greeting for a column that has 0 if the receiver is new on the list
+        extra_sentence = ""
+        if received == 0:
+            extra_sentence = "Thank you for signing up to my newsletter! <3<br>"
+
+        
+
+        # Create the email message
+        message = MIMEMultipart("related")
+        message["Subject"] = subject_NL
+        message["From"] = sender_email
+        message["To"] = receiver_email
+
+        # Create alternative MIME part for text and HTML
+        msg_alternative = MIMEMultipart("alternative")
+        message.attach(msg_alternative)
+        
+
+        # Attach plain text message (optional)
+        msgText = MIMEText('')
+        msg_alternative.attach(msgText)
+
+
+        # few notes on HTML Code --> styling should be within HTML, words within {} are variables that you can assign or that have been assigned above, that you need to assign later.
+  
+        html_email_NL = """\
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Year of Romance | Heartbreak | Live in Berlin</title>
+          </head>
+          <body style="color:rgba(0,0,0,0.8); text-align: center; font-family: 'Times New Roman', Times, serif; font-weight:500; margin: 0; padding: 0; background-image: url('cid:cover_heartbreak'); background-size: cover; filter: invert(1); background-position: center; background-repeat: no-repeat; position: relative;">
+            
+            <!-- Soft white overlay -->
+            <div style="background-color: rgba(255, 255, 255, 0.8); padding: 20px; border-radius: 10px; margin-top: 50px;">
+            
+              <div style="max-width: 800px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; text-align: center;">
+                
+                <h2 style="font-size: 28px; text-align: center;">｡✿ Announcing Year of Romance ✿｡</h2>
+                
+                <div style="margin-top: 40px; font-size: 18px; text-align: center;">
+                  
+                  <p>Dear {receiver_name},</p>
+        
+                  <p>{extra_sentence} I'm very excited to share with you that my album, <strong>Year of Romance</strong>, will be released on <strong>March 28th</strong> via Intercept Records.</p>
+        
+                  <p><strong>.~ Heartbreak out Today ~.</strong><br>
+                    Listen to the last single before the album, <strong>"Heartbreak"</strong>, which is out today and available on <br> 
+                    <a href="https://lizardies.bandcamp.com/track/heartbreak" style="color:#3b992a; text-decoration: none;">Bandcamp</a><br>  
+                    <a href="https://on.soundcloud.com/DZJJ5BRMaUnXfJEMA" style="color:#3b992a; text-decoration: none;">SoundCloud</a><br>
+                    <a href="https://intercept.lnk.to/Heartbreak" style="color:#3b992a; text-decoration: none;">Streaming</a><br>
+                  </p>
+        
+                  <p>The track is inspired by folk music (i.e. Ich Liebe Das Leben by Vicky Leandros) and is about practicing general love and care as an antidote for heartbreak.</p>
+        
+                  <p>Give it a listen, I hope you like it and am happy to hear your thoughts,</p>
+        
+                  <p>Big hug,</p>
+                  <p>Liza</p>
+        
+                  <div style="margin-top: 40px; text-align: center;">
+                    <img src="cid:cover_heartbreak" alt="Cover Art" style="width: 200px; height: 200px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);">
+                  </div>
+        
+                  <div style="font-size: 14px; color: #888; text-align: center; margin-top: 30px; padding-bottom: 20px;">
+                    <p>Photo by credits</p>
+                  </div>
+        
+                  <h3 style="margin-top: 0px; text-align: center;">Live Shows</h3>
+        
+                  <ul style="list-style: none; padding: 0; font-weight: 500; text-align: center;">
+                    <li>06.03 ~ <strong>Berlin</strong> ~ Berghain Kantine <em>(Supporting Worldbrain)</em></li>
+                  </ul>
+        
+                  <p style="font-size: 16px; text-align: center;">
+                    If you'd like to come to my show at <a href="https://www.path/" style="color:#3b992a; font-weight:600; text-decoration: none;">Berghain Kantine</a> on Thursday <strong>06.03</strong>,
+                    but struggle with the ticket fee, feel free to reach out! I have a few guest list spots available.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+
+
+        """
+
+        # Attach HTML message  & assign variables
+        html_content = html_email_NL.format(receiver_name=receiver_name, extra_sentence=extra_sentence) 
+        msgText = MIMEText(html_content, "html")
+        msg_alternative.attach(msgText)
+
+        # Open the image and attach it to the email
+        with open(image_path, 'rb') as img_file:
+            img_data = img_file.read()
+            msgImage = MIMEImage(img_data, name="Heartbreak_Cover.jpg")  # Set the filename here
+            msgImage.add_header('Content-ID', '<cover_heartbreak>')  # This matches the `src="cid:cover_underwater"` in HTML
+            msgImage.add_header('Content-Disposition', 'inline', filename="Heartbreak_Cover.jpg")  # Set filename for the attachment
+            message.attach(msgImage)
+
+
+        # Send the email
+        try:
+            server.sendmail(sender_email, receiver_email, message.as_string())
+            print(f"Email sent to {receiver_name} - {receiver_email}")
+        except Exception as e:
+            print(f"Failed to send to {receiver_name} - {receiver_email}. Error: {e}")
+            
+print("All emails sent!")
